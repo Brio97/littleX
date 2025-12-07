@@ -34,7 +34,7 @@ LittleX is a minimalistic implementation of a **social media platform** that sho
 Start by cloning the **LittleX** repository to your local system:
 
 ```bash
-git clone https://github.com/Jaseci-Labs/littleX.git
+git clone https://github.com/Brio97/littleX
 cd littlex
 ```
 ### 2. Install Dependencies
