@@ -12,6 +12,10 @@ import {
   updateTweetAction,
   updateUserProfileAction,
   searchTweetsAction,
+  retweetTweetAction,
+  removeRetweetAction,
+  quoteRetweetAction,
+  removeQuoteRetweetAction,
 } from "../actions";
 import { TweetNode } from "@/nodes/tweet-node";
 import { useEffect } from "react";
@@ -121,6 +125,23 @@ export const useTweets = () => {
     dispatch(unFollowRequestAction(id));
     dispatch(fetchTweetsAction());
   };
+
+  const retweetTweet = (id: string) => {
+    dispatch(retweetTweetAction({ id }));
+  };
+
+  const removeRetweet = (id: string) => {
+    dispatch(removeRetweetAction({id }));
+  };
+
+  const quoteRetweetTweet = (id: string, quoteContent: string) => {
+    dispatch(quoteRetweetAction({ id, quoteContent }));
+  };
+
+  const removeQuoteRetweet = (id: string) => {
+    dispatch(removeQuoteRetweetAction(id));
+  };
+
   return {
     items,
     isLoading,
@@ -137,6 +158,10 @@ export const useTweets = () => {
     successMessage,
     likeTweet,
     unlikeTweet,
+    retweetTweet,
+    removeRetweet,
+    quoteRetweetTweet,
+    removeQuoteRetweet,
     // createTweet,
     deleteTweet,
     updateTweet,

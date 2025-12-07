@@ -17,6 +17,14 @@ node Profile {
     can follow with follow_request entry;
 
     can un_follow with un_follow_request entry;
+
+    can retweet with retweet_tweet entry;
+
+    can remove_retweet with remove_retweet entry;
+
+    can quote with quote_retweet entry;
+
+    can remove_quote with remove_quote_retweet entry;
 }
 
 obj TweetInfo {
@@ -56,11 +64,28 @@ node Comment {
     can delete with remove_comment entry;
 }
 
+node Retweet {
+    has original_tweet_id: str;
+    has retweeted_at: str = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S");
+    has retweet_count: int = 0;
+}
+
+node QuoteRetweet {
+    has original_tweet_id: str;
+    has quote_content: str;
+    has quoted_at: str = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S");
+    has quote_count: int = 0;
+}
+
 edge Follow {}
 
 edge Like {}
 
 edge Post {}
+
+edge Retweets {}
+
+edge QuoteRetweets {}
 
 walker visit_profile {
     can visit_profile with `root entry;
@@ -119,4 +144,21 @@ walker load_feed(visit_profile) {
 
     can report_feed with exit;
 
+}
+
+walker retweet_tweet(visit_profile) {
+    has tweet_id: str;
+}
+
+walker remove_retweet(visit_profile) {
+    has retweet_id: str;
+}
+
+walker quote_retweet(visit_profile) {
+    has original_tweet_id: str;
+    has quote_content: str;
+}
+
+walker remove_quote_retweet(visit_profile) {
+    has quote_retweet_id: str;
 }

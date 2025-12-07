@@ -1,5 +1,5 @@
 import { createSlice } from "@reduxjs/toolkit";
-import { TweetNode } from "@/nodes/tweet-node";
+import { TweetNode, FeedItem } from "@/nodes/tweet-node";
 import {
   addCommentAction,
   createTweetAction,
@@ -11,6 +11,8 @@ import {
   likeTweetAction,
   loadUserProfilesAction,
   removeLikeAction,
+  retweetTweetAction,
+  removeRetweetAction,
   unFollowRequestAction,
   updateCommentAction,
   updateTweetAction,
@@ -33,10 +35,10 @@ export type UserProfile = {
 //   username: string;
 // }
 interface TweetState {
-  items: TweetNode[];
+  items: FeedItem[];
   userProfiles: User[];
   profile: UserProfile;
-  searchResult: TweetNode[];
+  searchResult: FeedItem[];
 
   isLoading: boolean;
   error: string | null;

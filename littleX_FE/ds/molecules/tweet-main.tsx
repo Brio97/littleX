@@ -1,15 +1,26 @@
 import { TweetForm } from "../organisms/tweet-form";
-import { TweetNode } from "@/nodes/tweet-node";
+import { FeedItem, TweetNode, RetweetNode, QuoteRetweetNode } from "@/nodes/tweet-node";
 import { User } from "@/store/tweetSlice";
 import { TweetCard } from "../organisms/tweet-card";
 import { useSearchParams } from "next/navigation";
+import { Repeat2 } from "lucide-react";
 
 type MainFeedProps = {
-  feeds: TweetNode[];
+  feeds: FeedItem[];
   isLoading?: boolean;
   profile: User;
-  userTweets: TweetNode[];
-  searchResult: TweetNode[];
+  userTweets: FeedItem[];
+  searchResult: FeedItem[];
+};
+
+// Component to display retweet header
+const RetweetHeader = ({ item }: { item: RetweetNode | QuoteRetweetNode }) => {
+  return (
+    <div className="flex items-center gap-2 px-4 py-2 text-xs text-muted-foreground border-l-2 border-muted-foreground ml-2">
+      <Repeat2 className="size-3" />
+      <span>Retweet</span>
+    </div>
+  );
 };
 
 // Main Social Media Feed Component
@@ -24,7 +35,7 @@ const MainFeed = ({
   const activeTab = searchParams.get("tab") || "home";
 
   // Determine which data to display based on the URL parameter
-  const getActiveData = (): TweetNode[] => {
+  const getActiveData = (): FeedItem[] => {
     switch (activeTab) {
       case "profile":
       case "user":
@@ -96,18 +107,37 @@ const MainFeed = ({
         <div className="flex-1 overflow-y-auto">
           <div className="p-4 space-y-6">
             {activeData.length > 0 ? (
-              activeData.map((tweet, index) => (
-                <TweetCard
-                  key={tweet.id + index}
-                  id={tweet.id}
-                  username={tweet.username}
-                  content={tweet.content}
-                  comments={tweet.comments}
-                  likes={tweet.likes}
-                  created_at={tweet.created_at}
-                  profile={profile}
-                />
-              ))
+              activeData.map((item, index) => {
+                // Handle retweets - display as a quote of the original tweet
+                if (item.type === "retweet" || item.type === "quote-retweet") {
+                  const retweetItem = item as RetweetNode | QuoteRetweetNode;
+                  return (
+                    <div key={item.id + index} className="border-l-2 border-muted pl-4">
+                      <RetweetHeader item={retweetItem} />
+                      {item.type === "quote-retweet" && (
+                        <div className="mt-2 px-4 py-2 bg-muted rounded text-sm">
+                          <p className="text-foreground">{(item as QuoteRetweetNode).quote_content}</p>
+                        </div>
+                      )}
+                    </div>
+                  );
+                }
+
+                // Regular tweets
+                const tweet = item as TweetNode;
+                return (
+                  <TweetCard
+                    key={tweet.id + index}
+                    id={tweet.id}
+                    username={tweet.username}
+                    content={tweet.content}
+                    comments={tweet.comments}
+                    likes={tweet.likes}
+                    created_at={tweet.created_at}
+                    profile={profile}
+                  />
+                );
+              })
             ) : (
               <div className="text-center text-muted-foreground py-12">
                 <div className="max-w-md mx-auto">

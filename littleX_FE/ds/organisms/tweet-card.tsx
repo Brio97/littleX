@@ -8,6 +8,7 @@ import {
   MoreVertical,
   Share2,
   MessageSquare,
+  Repeat2,
 } from "lucide-react";
 import { Card, CardContent, CardFooter, CardHeader } from "../atoms/card";
 import { Avatar, AvatarFallback, AvatarImage } from "../atoms/avatar";
@@ -41,6 +42,9 @@ import {
   deleteTweetAction,
   likeTweetAction,
   removeLikeAction,
+  retweetTweetAction,
+  removeRetweetAction,
+  quoteRetweetAction,
   addCommentAction,
   updateCommentAction,
   deleteCommentAction,
@@ -249,6 +253,85 @@ function CommentsDialog({
   );
 }
 
+interface RetweetDialogProps {
+  isOpen: boolean;
+  onOpenChange: (isOpen: boolean) => void;
+  onRetweet: () => void;
+  onQuoteRetweet: () => void;
+  quoteContent: string;
+  setQuoteContent: (value: string) => void;
+  originalContent: string;
+  originalUsername: string;
+}
+
+function RetweetDialog({
+  isOpen,
+  onOpenChange,
+  onRetweet,
+  onQuoteRetweet,
+  quoteContent,
+  setQuoteContent,
+  originalContent,
+  originalUsername,
+}: RetweetDialogProps): JSX.Element {
+  return (
+    <Dialog open={isOpen} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>Retweet Options</DialogTitle>
+        </DialogHeader>
+        
+        {/* Original Tweet Preview */}
+        <div className="bg-muted/30 rounded-lg p-3 mb-4">
+          <div className="text-sm font-medium mb-1">{originalUsername}</div>
+          <div className="text-sm text-muted-foreground">{originalContent}</div>
+        </div>
+
+        <div className="space-y-3">
+          {/* Simple Retweet Button */}
+          <Button
+            onClick={onRetweet}
+            className="w-full"
+            variant="outline"
+          >
+            <Repeat2 className="mr-2 size-4" />
+            Retweet
+          </Button>
+
+          {/* Quote Retweet Section */}
+          <div className="border-t pt-3">
+            <div className="mb-2">
+              <label className="text-sm font-medium">Quote Retweet</label>
+              <Textarea
+                placeholder="What's your take on this tweet?"
+                value={quoteContent}
+                onChange={(e) => setQuoteContent(e.target.value)}
+                className="mt-2 min-h-24"
+              />
+            </div>
+            <Button
+              onClick={onQuoteRetweet}
+              className="w-full"
+              disabled={!quoteContent.trim()}
+            >
+              Quote Retweet
+            </Button>
+          </div>
+        </div>
+
+        <DialogFooter>
+          <Button
+            variant="ghost"
+            onClick={() => onOpenChange(false)}
+          >
+            Cancel
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 function ActionDropdown({
   onEdit,
   onDelete,
@@ -294,10 +377,13 @@ export function TweetCard({
   const [isLikesDialogOpen, setIsLikesDialogOpen] = useState<boolean>(false);
   const [isCommentsDialogOpen, setIsCommentsDialogOpen] =
     useState<boolean>(false);
+  const [isRetweetDialogOpen, setIsRetweetDialogOpen] = useState<boolean>(false);
 
   // Combined state for both adding and editing comments
   const [commentInputValue, setCommentInputValue] = useState<string>("");
   const [editingComment, setEditingComment] = useState<Comment | null>(null);
+  const [retweeted, setRetweeted] = useState<boolean>(false);
+  const [quoteContent, setQuoteContent] = useState<string>("");
 
   const loginUsername: string = profile.username;
   const liked: boolean = !!likes.find(
@@ -310,6 +396,31 @@ export function TweetCard({
     } else {
       dispatch(likeTweetAction({ id, username: loginUsername }));
     }
+  };
+
+  const handleRetweet = (id: string): void => {
+    if (retweeted) {
+      dispatch(removeRetweetAction({ id }));
+      setRetweeted(false);
+    } else {
+      setIsRetweetDialogOpen(true);
+    }
+  };
+
+  const handleSimpleRetweet = (): void => {
+    dispatch(retweetTweetAction({ id }));
+    setRetweeted(true);
+    setIsRetweetDialogOpen(false);
+  };
+
+  const handleQuoteRetweet = (): void => {
+    if (!quoteContent.trim()) {
+      return;
+    }
+    dispatch(quoteRetweetAction({ id, quoteContent }));
+    setRetweeted(true);
+    setIsRetweetDialogOpen(false);
+    setQuoteContent("");
   };
 
   const handleSubmitComment = (): void => {
@@ -423,6 +534,16 @@ export function TweetCard({
                 <MessageSquare size={18} className="mr-1" />
                 <span className="text-nowrap">{comments.length} Comments</span>
               </button>
+
+              <button
+                onClick={() => handleRetweet(id)}
+                className={`flex items-center text-nowrap ${
+                  retweeted ? "text-green-600" : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                <Repeat2 size={18} className="mr-1" fill={retweeted ? "currentColor" : "none"} />
+                <span>Retweet</span>
+              </button>
             </div>
           </div>
           {/* Quick add comment */}
@@ -479,6 +600,17 @@ export function TweetCard({
         handleSubmitComment={handleSubmitComment}
         editingComment={editingComment}
         onCancelEdit={cancelEditComment}
+      />
+
+      <RetweetDialog
+        isOpen={isRetweetDialogOpen}
+        onOpenChange={setIsRetweetDialogOpen}
+        onRetweet={handleSimpleRetweet}
+        onQuoteRetweet={handleQuoteRetweet}
+        quoteContent={quoteContent}
+        setQuoteContent={setQuoteContent}
+        originalContent={content}
+        originalUsername={username}
       />
     </>
   );

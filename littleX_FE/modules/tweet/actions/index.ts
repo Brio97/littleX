@@ -249,3 +249,59 @@ export const deleteCommentAction = createAsyncThunk(
     }
   }
 );
+
+export const retweetTweetAction = createAsyncThunk(
+  "tweet/retweet",
+  async (data: { id: string }, { rejectWithValue }) => {
+    try {
+      const response = await TweetApi.retweetTweet(data.id);
+      return response;
+    } catch (error) {
+      return rejectWithValue(
+        error instanceof Error ? error.message : "Failed to retweet"
+      );
+    }
+  }
+);
+
+export const removeRetweetAction = createAsyncThunk(
+  "tweet/removeRetweet",
+  async (data: { id: string }, { rejectWithValue }) => {
+    try {
+      const response = await TweetApi.removeRetweet(data.id);
+      return response;
+    } catch (error) {
+      return rejectWithValue(
+        error instanceof Error ? error.message : "Failed to remove retweet"
+      );
+    }
+  }
+);
+
+export const quoteRetweetAction = createAsyncThunk(
+  "tweet/quoteRetweet",
+  async (data: { id: string; quoteContent: string }, { rejectWithValue }) => {
+    try {
+      const response = await TweetApi.quoteRetweetTweet(data.id, data.quoteContent);
+      return response;
+    } catch (error) {
+      return rejectWithValue(
+        error instanceof Error ? error.message : "Failed to quote retweet"
+      );
+    }
+  }
+);
+
+export const removeQuoteRetweetAction = createAsyncThunk(
+  "tweet/removeQuoteRetweet",
+  async (id: string, { rejectWithValue }) => {
+    try {
+      const response = await TweetApi.removeQuoteRetweetTweet(id);
+      return response;
+    } catch (error) {
+      return rejectWithValue(
+        error instanceof Error ? error.message : "Failed to remove quote retweet"
+      );
+    }
+  }
+);

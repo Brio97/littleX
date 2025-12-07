@@ -1,4 +1,4 @@
-import { Comment, TweetNode } from "@/nodes/tweet-node";
+import { Comment, TweetNode, FeedItem, RetweetNode, QuoteRetweetNode } from "@/nodes/tweet-node";
 import { private_api } from "@/_core/api-client";
 import { User, UserProfile } from "@/store/tweetSlice";
 
@@ -8,17 +8,54 @@ export const TweetApi = {
     const res = await private_api.post("/walker/load_feed", {});
     const data = res.data?.reports?.[0] || [];
 
-    return data.map((entry: any) => {
-      const tweet = entry?.Tweet_Info?.context;
-      return {
-        id: tweet?.id,
-        username: tweet?.username ?? "",
-        content: tweet?.content ?? "",
-        embedding: tweet?.embedding ?? [],
-        likes: Array.isArray(tweet?.likes) ? tweet.likes : [],
-        comments: Array.isArray(tweet?.comments) ? tweet.comments : [],
-      } as TweetNode;
-    }) as TweetNode[];
+    return data.map((entry: any): FeedItem => {
+      // Check if it's a Retweet node
+      if (entry?.Retweet_Info?.context) {
+        const retweet = entry.Retweet_Info.context;
+        return {
+          id: retweet?.id,
+          username: "",
+          content: "",
+          embedding: [],
+          likes: [],
+          comments: [],
+          type: "retweet",
+          original_tweet_id: retweet?.original_tweet_id ?? "",
+          retweeted_at: retweet?.retweeted_at ?? "",
+          retweet_count: retweet?.retweet_count ?? 0,
+        } as RetweetNode;
+      }
+      // Check if it's a QuoteRetweet node
+      else if (entry?.QuoteRetweet_Info?.context) {
+        const quote = entry.QuoteRetweet_Info.context;
+        return {
+          id: quote?.id,
+          username: "",
+          content: quote?.quote_content ?? "",
+          embedding: [],
+          likes: [],
+          comments: [],
+          type: "quote-retweet",
+          original_tweet_id: quote?.original_tweet_id ?? "",
+          quote_content: quote?.quote_content ?? "",
+          quoted_at: quote?.quoted_at ?? "",
+          quote_count: quote?.quote_count ?? 0,
+        } as QuoteRetweetNode;
+      }
+      // Otherwise it's a regular Tweet
+      else {
+        const tweet = entry?.Tweet_Info?.context;
+        return {
+          id: tweet?.id,
+          username: tweet?.username ?? "",
+          content: tweet?.content ?? "",
+          embedding: tweet?.embedding ?? [],
+          likes: Array.isArray(tweet?.likes) ? tweet.likes : [],
+          comments: Array.isArray(tweet?.comments) ? tweet.comments : [],
+          type: "tweet",
+        } as TweetNode;
+      }
+    }) as FeedItem[];
   },
 
   searchTweets: async (query: string) => {
@@ -27,17 +64,54 @@ export const TweetApi = {
     });
     const data = res.data?.reports?.[0] || [];
 
-    const result = data.map((entry: any) => {
-      const tweet = entry?.Tweet_Info?.context;
-      return {
-        id: tweet?.id,
-        username: tweet?.username ?? "",
-        content: tweet?.content ?? "",
-        embedding: tweet?.embedding ?? [],
-        likes: Array.isArray(tweet?.likes) ? tweet.likes : [],
-        comments: Array.isArray(tweet?.comments) ? tweet.comments : [],
-      } as TweetNode;
-    }) as TweetNode[];
+    const result = data.map((entry: any): FeedItem => {
+      // Check if it's a Retweet node
+      if (entry?.Retweet_Info?.context) {
+        const retweet = entry.Retweet_Info.context;
+        return {
+          id: retweet?.id,
+          username: "",
+          content: "",
+          embedding: [],
+          likes: [],
+          comments: [],
+          type: "retweet",
+          original_tweet_id: retweet?.original_tweet_id ?? "",
+          retweeted_at: retweet?.retweeted_at ?? "",
+          retweet_count: retweet?.retweet_count ?? 0,
+        } as RetweetNode;
+      }
+      // Check if it's a QuoteRetweet node
+      else if (entry?.QuoteRetweet_Info?.context) {
+        const quote = entry.QuoteRetweet_Info.context;
+        return {
+          id: quote?.id,
+          username: "",
+          content: quote?.quote_content ?? "",
+          embedding: [],
+          likes: [],
+          comments: [],
+          type: "quote-retweet",
+          original_tweet_id: quote?.original_tweet_id ?? "",
+          quote_content: quote?.quote_content ?? "",
+          quoted_at: quote?.quoted_at ?? "",
+          quote_count: quote?.quote_count ?? 0,
+        } as QuoteRetweetNode;
+      }
+      // Otherwise it's a regular Tweet
+      else {
+        const tweet = entry?.Tweet_Info?.context;
+        return {
+          id: tweet?.id,
+          username: tweet?.username ?? "",
+          content: tweet?.content ?? "",
+          embedding: tweet?.embedding ?? [],
+          likes: Array.isArray(tweet?.likes) ? tweet.likes : [],
+          comments: Array.isArray(tweet?.comments) ? tweet.comments : [],
+          type: "tweet",
+        } as TweetNode;
+      }
+    }) as FeedItem[];
 
     return result;
   },
@@ -55,6 +129,7 @@ export const TweetApi = {
       embedding: tweet?.context?.embedding || [],
       id: tweet?.id || "",
       likes: [],
+      retweets: [],
       username: "",
       created_at: tweet?.context?.created_at || "",
     };
@@ -100,6 +175,44 @@ export const TweetApi = {
       id: data.id,
       username: username,
     };
+  },
+
+  retweetTweet: async (id: string) => {
+    const response = await private_api.post(`/walker/retweet_tweet/${id}`, {
+      tweet_id: id,
+    });
+    const data = response.data?.reports?.[0]?.[0] || {};
+    return {
+      id: data.id,
+      tweet_id: id,
+    };
+  },
+
+  removeRetweet: async (id: string) => {
+    const response = await private_api.post(`/walker/remove_retweet/${id}`, {
+      retweet_id: id,
+    });
+    return id;
+  },
+
+  quoteRetweetTweet: async (id: string, quoteContent: string) => {
+    const response = await private_api.post(`/walker/quote_retweet/${id}`, {
+      original_tweet_id: id,
+      quote_content: quoteContent,
+    });
+    const data = response.data?.reports?.[0]?.[0] || {};
+    return {
+      id: data.id,
+      tweet_id: id,
+      quote_content: quoteContent,
+    };
+  },
+
+  removeQuoteRetweetTweet: async (id: string) => {
+    const response = await private_api.post(`/walker/remove_quote_retweet/${id}`, {
+      quote_retweet_id: id,
+    });
+    return id;
   },
 
   loadAllTheUserProfiles: async () => {
